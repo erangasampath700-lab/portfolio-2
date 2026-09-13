@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXORA — Digital Development Studio | Sri Lanka</title>
+<meta name="description" content="NEXORA is a digital development studio in Sri Lanka crafting high-performance websites, web applications and AI-powered digital experiences.">
+<meta property="og:title" content="NEXORA — Digital experiences, engineered for the future.">
+<meta property="og:description" content="A digital development studio designing and building modern websites, web applications and intelligent digital experiences.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="en_US">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+<style>
+:root{
+  --bg:#05050a;
+  --bg-2:#0a0a14;
+  --surface:rgba(255,255,255,.035);
+  --surface-2:rgba(255,255,255,.06);
+  --border:rgba(255,255,255,.09);
+  --border-soft:rgba(255,255,255,.06);
+  --text:#f2f2f8;
+  --muted:#8b8ba3;
+  --muted-2:#5c5c74;
+  --violet:#8b5cf6;
+  --purple:#a855f7;
+  --blue:#3b82f6;
+  --cyan:#22d3ee;
+  --grad:linear-gradient(120deg,#8b5cf6 0%,#a855f7 35%,#3b82f6 70%,#22d3ee 100%);
+  --radius:20px;
+  --font-head:"Space Grotesk",system-ui,sans-serif;
+  --font-body:"Inter",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono",monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:var(--font-body);font-weight:300;
+  line-height:1.7;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:rgba(139,92,246,.4);color:#fff}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+button{font-family:inherit;cursor:pointer}
+
+/* ---------- grain + grid backdrop ---------- */
+.noise::before{
+  content:"";position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:72px 72px;
+  mask-image:radial-gradient(ellipse 90% 70% at 50% 0%,black 30%,transparent 80%);
+  -webkit-mask-image:radial-gradient(ellipse 90% 70% at 50% 0%,black 30%,transparent 80%);
+}
+
+/* ---------- cursor spotlight ---------- */
+#spotlight{position:fixed;top:0;left:0;width:640px;height:640px;z-index:2;pointer-events:none;
+  background:radial-gradient(circle,rgba(139,92,246,.09),rgba(59,130,246,.05) 40%,transparent 65%);
+  transform:translate(-50%,-50%);border-radius:50%;opacity:0;transition:opacity .6s;
+}
+body:hover #spotlight{opacity:1}
+
+/* ---------- preloader ---------- */
+#loader{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:24px;transition:opacity .8s var(--ease),visibility .8s}
+#loader.done{opacity:0;visibility:hidden}
+#loader .word{font-family:var(--font-head);font-size:clamp(28px,4vw,44px);font-weight:600;letter-spacing:.35em;display:flex}
+#loader .word span{opacity:0;animation:lchar .5s var(--ease) forwards}
+@keyframes lchar{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+#loader .bar{width:180px;height:1px;background:rgba(255,255,255,.1);overflow:hidden}
+#loader .bar i{display:block;height:100%;width:0;background:var(--grad);animation:load 1.4s var(--ease) forwards}
+@keyframes load{to{width:100%}}
+
+/* ---------- nav ---------- */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:22px 4vw;display:flex;align-items:center;justify-content:space-between;transition:padding .5s var(--ease),background .5s,border-color .5s,backdrop-filter .5s;border-bottom:1px solid transparent}
+nav.scrolled{padding:13px 4vw;background:rgba(8,8,16,.55);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom-color:var(--border-soft)}
+.logo{font-family:var(--font-head);font-weight:600;font-size:19px;letter-spacing:.28em;position:relative;z-index:2}
+.logo b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:700}
+.nav-links{display:flex;gap:38px;align-items:center}
+.nav-links a{font-size:13.5px;font-weight:400;color:var(--muted);letter-spacing:.06em;position:relative;transition:color .3s}
+.nav-links a::after{content:"";position:absolute;left:0;bottom:-5px;height:1px;width:0;background:var(--grad);transition:width .35s var(--ease)}
+.nav-links a:hover{color:var(--text)}
+.nav-links a:hover::after{width:100%}
+.nav-cta{font-size:13px;font-weight:500;padding:10px 22px;border-radius:100px;border:1px solid var(--border);background:var(--surface);backdrop-filter:blur(8px);color:var(--text);transition:.35s var(--ease);white-space:nowrap}
+.nav-cta:hover{border-color:rgba(168,85,247,.6);box-shadow:0 0 30px rgba(139,92,246,.25);transform:translateY(-2px)}
+#burger{display:none;background:none;border:none;z-index:110;width:40px;height:40px;position:relative}
+#burger span{position:absolute;left:8px;right:8px;height:1.5px;background:var(--text);transition:.4s var(--ease)}
+#burger span:nth-child(1){top:15px}#burger span:nth-child(2){top:24px}
+#burger.open span:nth-child(1){top:20px;transform:rotate(45deg)}
+#burger.open span:nth-child(2){top:20px;transform:rotate(-45deg)}
+#mobileMenu{position:fixed;inset:0;z-index:105;background:rgba(5,5,12,.9);backdrop-filter:blur(30px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;opacity:0;visibility:hidden;transition:.5s var(--ease)}
+#mobileMenu.open{opacity:1;visibility:visible}
+#mobileMenu a{font-family:var(--font-head);font-size:30px;font-weight:500;color:var(--muted);transition:color .3s,transform .3s}
+#mobileMenu a:hover{color:var(--text);transform:translateX(6px)}
+
+/* ---------- shared section styling ---------- */
+section{position:relative;z-index:3}
+.wrap{max-width:1280px;margin:0 auto;padding:0 4vw}
+.sec-label{font-family:var(--font-mono);font-size:12px;letter-spacing:.3em;color:var(--violet);display:inline-flex;align-items:center;gap:12px;margin-bottom:26px}
+.sec-label::before{content:"";width:32px;height:1px;background:var(--grad)}
+h1,h2,h3{font-family:var(--font-head);font-weight:600;line-height:1.12;letter-spacing:-.02em}
+h2{font-size:clamp(34px,4.6vw,58px);margin-bottom:24px}
+.grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{color:var(--muted);font-size:clamp(15px,1.4vw,18px);max-width:640px;font-weight:300}
+
+/* reveal animation */
+.reveal{opacity:0;transform:translateY(44px);transition:opacity 1s var(--ease),transform 1s var(--ease)}
+.reveal.in{opacity:1;transform:none}
+.reveal.d1{transition-delay:.1s}.reveal.d2{transition-delay:.2s}.reveal.d3{transition-delay:.3s}.reveal.d4{transition-delay:.4s}.reveal.d5{transition-delay:.5s}
+
+/* ---------- HERO ---------- */
+#hero{min-height:100svh;display:flex;align-items:center;padding:140px 4vw 80px;position:relative;overflow:hidden}
+#hero-canvas{position:absolute;inset:0;z-index:0;opacity:.9}
+.hero-inner{position:relative;z-index:2;width:100%;max-width:1280px;margin:0 auto}
+.hero-label{font-family:var(--font-mono);font-size:12px;letter-spacing:.32em;color:var(--muted);display:inline-flex;align-items:center;gap:14px;padding:10px 18px;border:1px solid var(--border);border-radius:100px;background:var(--surface);backdrop-filter:blur(10px);margin-bottom:34px}
+.hero-label i{width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 12px #34d399;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hero-h1{font-size:clamp(44px,7.4vw,102px);font-weight:600;letter-spacing:-.03em;line-height:1.04;max-width:15ch}
+.hero-h1 .line{display:block;overflow:hidden}
+.hero-h1 .line span{display:inline-block;transform:translateY(110%);animation:maskUp 1.1s var(--ease) forwards}
+.hero-h1 .line:nth-child(1) span{animation-delay:.25s}
+.hero-h1 .line:nth-child(2) span{animation-delay:.4s}
+.hero-h1 .line:nth-child(3) span{animation-delay:.55s;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:.12em}
+@keyframes maskUp{to{transform:none}}
+.hero-sub{margin:32px 0 42px;color:var(--muted);font-size:clamp(15px,1.5vw,18.5px);max-width:560px;opacity:0;animation:fadeUp 1s var(--ease) .75s forwards}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+.hero-ctas{display:flex;gap:18px;flex-wrap:wrap;opacity:0;animation:fadeUp 1s var(--ease) .95s forwards}
+.btn{display:inline-flex;align-items:center;gap:12px;padding:16px 32px;border-radius:100px;font-size:14.5px;font-weight:500;font-family:var(--font-head);letter-spacing:.02em;position:relative;transition:.4s var(--ease);will-change:transform}
+.btn .arr{transition:transform .4s var(--ease)}
+.btn:hover .arr{transform:translateX(5px)}
+.btn-primary{background:var(--grad);color:#fff;border:none;box-shadow:0 8px 40px rgba(139,92,246,.35)}
+.btn-primary:hover{box-shadow:0 12px 60px rgba(139,92,246,.55);transform:translateY(-3px)}
+.btn-ghost{background:var(--surface);border:1px solid var(--border);color:var(--text);backdrop-filter:blur(10px)}
+.btn-ghost:hover{border-color:rgba(34,211,238,.5);box-shadow:0 0 34px rgba(34,211,238,.18);transform:translateY(-3px)}
+.hero-scroll{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--muted-2);font-family:var(--font-mono);font-size:10px;letter-spacing:.3em;z-index:2}
+.hero-scroll .wire{width:1px;height:48px;background:linear-gradient(to bottom,transparent,var(--violet));overflow:hidden;position:relative}
+.hero-scroll .wire::after{content:"";position:absolute;top:-100%;left:0;width:100%;height:100%;background:linear-gradient(to bottom,transparent,var(--cyan));animation:wireDrop 2s var(--ease) infinite}
+@keyframes wireDrop{to{top:100%}}
+.hero-orbs{position:absolute;inset:0;z-index:0;pointer-events:none}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.28}
+.orb.o1{width:520px;height:520px;background:#7c3aed;top:-160px;right:-120px;animation:float1 14s ease-in-out infinite}
+.orb.o2{width:420px;height:420px;background:#0ea5e9;bottom:-140px;left:-120px;animation:float2 18s ease-in-out infinite}
+@keyframes float1{50%{transform:translate(-50px,60px)}}
+@keyframes float2{50%{transform:translate(60px,-40px)}}
+
+/* ---------- STUDIO ---------- */
+#studio{padding:150px 0}
+.studio-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:70px;align-items:start}
+.studio-copy p{color:var(--muted);margin-top:8px}
+.principles{display:flex;flex-direction:column;gap:14px}
+.principle{padding:30px 32px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);backdrop-filter:blur(12px);position:relative;overflow:hidden;transition:.45s var(--ease)}
+.principle::before{content:"";position:absolute;top:0;left:0;width:100%;height:1px;background:var(--grad);transform:scaleX(0);transform-origin:left;transition:transform .5s var(--ease)}
+.principle:hover{transform:translateX(8px);border-color:rgba(168,85,247,.35);background:var(--surface-2)}
+.principle:hover::before{transform:scaleX(1)}
+.principle .num{font-family:var(--font-mono);font-size:11px;color:var(--violet);letter-spacing:.25em}
+.principle h3{font-size:20px;margin:8px 0 6px}
+.principle p{color:var(--muted);font-size:14.5px}
+
+/* ---------- CAPABILITIES ---------- */
+#capabilities{padding:130px 0;background:linear-gradient(to bottom,transparent,rgba(139,92,246,.03),transparent)}
+.cap-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:60px}
+.cap-card{padding:40px 34px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);backdrop-filter:blur(14px);position:relative;overflow:hidden;transition:.5s var(--ease);min-height:250px;display:flex;flex-direction:column}
+.cap-card .glow{position:absolute;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(168,85,247,.22),transparent 70%);top:-90px;right:-90px;opacity:0;transition:opacity .5s}
+.cap-card:hover{transform:translateY(-8px);border-color:rgba(139,92,246,.4);box-shadow:0 24px 60px rgba(0,0,0,.45)}
+.cap-card:hover .glow{opacity:1}
+.cap-icon{width:52px;height:52px;border-radius:14px;border:1px solid var(--border);background:linear-gradient(135deg,rgba(139,92,246,.18),rgba(34,211,238,.12));display:flex;align-items:center;justify-content:center;margin-bottom:24px;transition:.45s var(--ease)}
+.cap-card:hover .cap-icon{transform:rotate(-8deg) scale(1.08);border-color:rgba(34,211,238,.5)}
+.cap-icon svg{width:24px;height:24px;stroke:url(#iconGrad)}
+.cap-card h3{font-size:20px;margin-bottom:10px}
+.cap-card p{color:var(--muted);font-size:14.5px}
+.cap-card .cap-num{position:absolute;bottom:24px;right:28px;font-family:var(--font-mono);font-size:11px;color:var(--muted-2);letter-spacing:.2em}
+
+/* ---------- TECH STACK ---------- */
+#tech{padding:140px 0;position:relative;overflow:hidden}
+.tech-lines{position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background:
+   repeating-linear-gradient(90deg,transparent 0 118px,rgba(139,92,246,.05) 118px 119px),
+   repeating-linear-gradient(0deg,transparent 0 118px,rgba(34,211,238,.04) 118px 119px);
+}
+.tech-groups{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;margin-top:64px}
+.tech-group{padding:36px 38px;border:1px solid var(--border);border-radius:var(--radius);background:rgba(10,10,20,.55);backdrop-filter:blur(16px);position:relative;overflow:hidden}
+.tech-group::after{content:"";position:absolute;top:0;left:-100%;width:60%;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);animation:scanline 4s linear infinite}
+@keyframes scanline{to{left:140%}}
+.tech-group h3{font-size:14px;font-family:var(--font-mono);letter-spacing:.28em;color:var(--muted);margin-bottom:22px;display:flex;align-items:center;gap:12px}
+.tech-group h3 i{width:8px;height:8px;border-radius:50%;background:var(--grad);box-shadow:0 0 14px rgba(168,85,247,.8);animation:pulse 2.6s infinite}
+.badges{display:flex;flex-wrap:wrap;gap:10px}
+.badge{padding:10px 20px;border-radius:100px;border:1px solid var(--border);background:var(--surface);font-size:13.5px;font-weight:400;color:var(--text);transition:.35s var(--ease);position:relative}
+.badge:hover{border-color:rgba(34,211,238,.55);color:#fff;box-shadow:0 0 24px rgba(34,211,238,.18);transform:translateY(-3px)}
+
+/* ---------- WORK ---------- */
+#work{padding:140px 0}
+.work-head{display:flex;justify-content:space-between;align-items:flex-end;gap:40px;flex-wrap:wrap;margin-bottom:70px}
+.work-layout{display:grid;grid-template-columns:repeat(12,1fr);gap:22px}
+.project{border-radius:calc(var(--radius) + 6px);overflow:hidden;border:1px solid var(--border);background:var(--bg-2);position:relative;transition:.55s var(--ease);cursor:pointer}
+.project:hover{border-color:rgba(139,92,246,.45);transform:translateY(-8px);box-shadow:0 30px 80px rgba(0,0,0,.55)}
+.p-visual{position:relative;aspect-ratio:16/10;overflow:hidden}
+.p-visual .scene{position:absolute;inset:0;transition:transform .8s var(--ease)}
+.project:hover .p-visual .scene{transform:scale(1.07)}
+.p-visual .scene::after{content:"";position:absolute;inset:0;opacity:.35;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E")}
+.scene .holo{position:absolute;border-radius:50%;filter:blur(2px)}
+.scene .ring{position:absolute;border:1px solid rgba(255,255,255,.14);border-radius:50%}
+.p-body{padding:30px 32px 34px;border-top:1px solid var(--border-soft);background:linear-gradient(to top,rgba(5,5,12,.9),rgba(10,10,20,.6));position:relative;z-index:2}
+.p-cat{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.3em;color:var(--cyan);margin-bottom:10px}
+.p-body h3{font-size:clamp(22px,2.2vw,30px);margin-bottom:10px}
+.p-body p{color:var(--muted);font-size:14.5px;margin-bottom:16px}
+.p-tech{font-family:var(--font-mono);font-size:11.5px;color:var(--muted-2);letter-spacing:.08em;margin-bottom:22px}
+.p-actions{display:flex;gap:14px;flex-wrap:wrap}
+.p-link{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:500;font-family:var(--font-head);color:var(--text);padding:9px 18px;border-radius:100px;border:1px solid var(--border);background:var(--surface);transition:.35s var(--ease)}
+.p-link:hover{border-color:rgba(168,85,247,.6);box-shadow:0 0 24px rgba(168,85,247,.22);transform:translateY(-2px)}
+.p-link .arr{transition:transform .35s var(--ease)}
+.p-link:hover .arr{transform:translateX(4px)}
+/* asymmetric spans */
+.pr-a{grid-column:1/8}.pr-b{grid-column:8/13;margin-top:90px}
+.pr-c{grid-column:1/6;margin-top:-40px}.pr-d{grid-column:6/13;margin-top:40px}
+.pr-e{grid-column:2/12;margin-top:20px}
+.pr-e .p-visual{aspect-ratio:21/8}
+.proj-tag{position:absolute;top:20px;left:24px;z-index:3;font-family:var(--font-mono);font-size:10px;letter-spacing:.25em;color:rgba(255,255,255,.75);padding:7px 14px;border-radius:100px;border:1px solid rgba(255,255,255,.18);background:rgba(5,5,12,.4);backdrop-filter:blur(8px)}
+
+/* ---------- PROCESS ---------- */
+#process{padding:140px 0;background:linear-gradient(to bottom,transparent,rgba(59,130,246,.03),transparent)}
+.timeline{display:grid;grid-template-columns:repeat(6,1fr);gap:0;margin-top:70px;position:relative}
+.timeline::before{content:"";position:absolute;top:26px;left:4%;right:4%;height:1px;background:linear-gradient(90deg,transparent,rgba(139,92,246,.5),rgba(34,211,238,.5),transparent)}
+.step{padding:0 16px;position:relative}
+.step .dot{width:52px;height:52px;border-radius:50%;border:1px solid var(--border);background:var(--bg-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:12px;color:var(--violet);position:relative;z-index:2;margin-bottom:24px;transition:.45s var(--ease);backdrop-filter:blur(6px)}
+.step:hover .dot{border-color:var(--violet);box-shadow:0 0 30px rgba(139,92,246,.35);color:#fff}
+.step h3{font-size:17px;margin-bottom:8px}
+.step p{color:var(--muted);font-size:13.5px}
+
+/* ---------- WHY ---------- */
+#why{padding:130px 0}
+.why-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:60px}
+.why-card{padding:34px 32px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);backdrop-filter:blur(12px);transition:.45s var(--ease)}
+.why-card:hover{transform:translateY(-6px);border-color:rgba(34,211,238,.4);background:var(--surface-2)}
+.why-card h3{font-size:18px;margin:16px 0 8px}
+.why-card p{color:var(--muted);font-size:14px}
+.why-card .check{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,rgba(139,92,246,.25),rgba(34,211,238,.15));border:1px solid var(--border);display:flex;align-items:center;justify-content:center}
+.why-card .check svg{width:18px;height:18px;stroke:#c4b5fd}
+
+/* ---------- METRICS ---------- */
+#metrics{padding:100px 0;border-top:1px solid var(--border-soft);border-bottom:1px solid var(--border-soft)}
+.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.metric{text-align:center;padding:34px 20px;border-radius:var(--radius);border:1px solid var(--border-soft);background:var(--surface);transition:.4s var(--ease)}
+.metric:hover{border-color:rgba(139,92,246,.35);transform:translateY(-4px)}
+.metric h3{font-size:19px;margin-bottom:8px}
+.metric p{font-family:var(--font-mono);font-size:12px;color:var(--muted);letter-spacing:.12em}
+
+/* ---------- CONTACT ---------- */
+#contact{padding:160px 0 130px;position:relative;overflow:hidden}
+.contact-orb{position:absolute;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(124,58,237,.16),transparent 65%);top:-250px;left:50%;transform:translateX(-50%);pointer-events:none}
+.contact-head{text-align:center;margin-bottom:70px}
+.contact-head .sec-label{justify-content:center}
+.contact-h{font-size:clamp(44px,6.5vw,88px);line-height:1.05}
+.contact-h .l2{display:block;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:.1em}
+.contact-form{max-width:760px;margin:0 auto;background:rgba(10,10,20,.6);border:1px solid var(--border);border-radius:calc(var(--radius) + 8px);padding:48px;backdrop-filter:blur(20px);position:relative;overflow:hidden}
+.contact-form::before{content:"";position:absolute;top:0;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,var(--violet),var(--cyan),transparent)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.field{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.field label{font-family:var(--font-mono);font-size:11px;letter-spacing:.22em;color:var(--muted)}
+.field input,.field select,.field textarea{background:rgba(255,255,255,.035);border:1px solid var(--border);border-radius:14px;padding:15px 18px;color:var(--text);font-family:var(--font-body);font-size:14.5px;transition:.35s;outline:none;width:100%;appearance:none}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238b8ba3' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 18px center}
+.field select option{background:#0a0a14}
+.field textarea{resize:vertical;min-height:130px}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:rgba(139,92,246,.65);box-shadow:0 0 0 3px rgba(139,92,246,.12);background:rgba(255,255,255,.05)}
+.form-submit{width:100%;justify-content:center;margin-top:8px;border:none}
+#formMsg{text-align:center;margin-top:16px;font-size:14px;color:#34d399;opacity:0;transition:opacity .5s}
+#formMsg.show{opacity:1}
+
+/* ---------- FOOTER ---------- */
+footer{border-top:1px solid var(--border-soft);padding:70px 0 40px;position:relative;z-index:3}
+.foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:50px;margin-bottom:60px}
+.foot-logo{font-family:var(--font-head);font-size:24px;font-weight:600;letter-spacing:.28em;margin-bottom:14px}
+.foot-logo b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.foot-tag{color:var(--muted);font-size:14px;max-width:280px}
+.foot-col h4{font-family:var(--font-mono);font-size:11px;letter-spacing:.28em;color:var(--muted-2);margin-bottom:20px}
+.foot-col a{display:block;color:var(--muted);font-size:14px;margin-bottom:12px;transition:.3s}
+.foot-col a:hover{color:var(--text);transform:translateX(4px)}
+.foot-bottom{border-top:1px solid var(--border-soft);padding-top:30px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+.foot-bottom p{color:var(--muted-2);font-size:13px}
+.socials{display:flex;gap:12px}
+.socials a{width:40px;height:40px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;transition:.35s var(--ease);color:var(--muted)}
+.socials a:hover{border-color:rgba(168,85,247,.6);color:#fff;box-shadow:0 0 20px rgba(139,92,246,.25);transform:translateY(-3px)}
+.socials svg{width:16px;height:16px;fill:currentColor}
+
+/* ---------- responsive ---------- */
+@media(max-width:1080px){
+  .cap-grid{grid-template-columns:repeat(2,1fr)}
+  .studio-grid{grid-template-columns:1fr;gap:50px}
+  .timeline{grid-template-columns:repeat(3,1fr);row-gap:50px}
+  .timeline::before{display:none}
+  .metric-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:900px){
+  .nav-links,.nav-cta{display:none}
+  #burger{display:block}
+  .pr-a,.pr-b,.pr-c,.pr-d,.pr-e{grid-column:1/13;margin-top:0}
+  .work-layout{gap:26px}
+  .pr-e .p-visual{aspect-ratio:16/9}
+  .tech-groups{grid-template-columns:1fr}
+  .why-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:640px){
+  .cap-grid,.why-grid{grid-template-columns:1fr}
+  .timeline{grid-template-columns:1fr 1fr}
+  .form-row{grid-template-columns:1fr}
+  .contact-form{padding:32px 24px}
+  .metric-grid{grid-template-columns:1fr 1fr;gap:12px}
+  .foot-grid{grid-template-columns:1fr;gap:36px}
+  .hero-ctas .btn{width:100%;justify-content:center}
+  #spotlight{display:none}
+}
+/* ---------- reduced motion ---------- */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+  .reveal{opacity:1;transform:none}
+}
+</style>
+<base target="_blank">
+</head>
+<body class="noise">
+<div class="grid-bg"></div>
+<div id="spotlight"></div>
+<svg width="0" height="0" style="position:absolute"><defs><linearGradient id="iconGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a855f7"/><stop offset="1" stop-color="#22d3ee"/></linearGradient></defs></svg>
+
+<!-- PRELOADER -->
+<div id="loader">
+  <div class="word" aria-hidden="true">
+    <span style="animation-delay:.05s">N</span><span style="animation-delay:.1s">E</span><span style="animation-delay:.15s">X</span><span style="animation-delay:.2s">O</span><span style="animation-delay:.25s">R</span><span style="animation-delay:.3s">A</span>
+  </div>
+  <div class="bar"><i></i></div>
+</div>
+
+<!-- NAV -->
+<nav id="nav" aria-label="Main navigation">
+  <a href="#hero" class="logo" aria-label="NEXORA home">NEX<b>O</b>RA.</a>
+  <div class="nav-links">
+    <a href="#work">Work</a>
+    <a href="#capabilities">Capabilities</a>
+    <a href="#process">Process</a>
+    <a href="#studio">Studio</a>
+    <a href="#contact">Contact</a>
+  </div>
+  <a href="#contact" class="nav-cta magnetic">Start a Project →</a>
+  <button id="burger" aria-label="Toggle menu" aria-expanded="false"><span></span><span></span></button>
+</nav>
+<div id="mobileMenu">
+  <a href="#work">Work</a>
+  <a href="#capabilities">Capabilities</a>
+  <a href="#process">Process</a>
+  <a href="#studio">Studio</a>
+  <a href="#contact">Contact</a>
+  <a href="#contact" style="color:#fff;font-size:20px;border:1px solid var(--border);padding:14px 34px;border-radius:100px;margin-top:10px">Start a Project →</a>
+</div>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-orbs"><div class="orb o1"></div><div class="orb o2"></div></div>
+  <canvas id="hero-canvas" aria-hidden="true"></canvas>
+  <div class="hero-inner">
+    <div class="hero-label"><i aria-hidden="true"></i> DIGITAL DEVELOPMENT STUDIO — SRI LANKA</div>
+    <h1 class="hero-h1">
+      <span class="line"><span>Digital experiences,</span></span>
+      <span class="line"><span>engineered for the</span></span>
+      <span class="line"><span>future.</span></span>
+    </h1>
+    <p class="hero-sub">We design and develop high-performance websites, web applications and AI-powered digital experiences that help ideas move forward.</p>
+    <div class="hero-ctas">
+      <a href="#work" class="btn btn-primary magnetic">Explore Our Work <span class="arr">→</span></a>
+      <a href="#contact" class="btn btn-ghost magnetic">Start a Project <span class="arr">→</span></a>
+    </div>
+  </div>
+  <div class="hero-scroll" aria-hidden="true">SCROLL<div class="wire"></div></div>
+</section>
+
+<!-- STUDIO -->
+<section id="studio">
+  <div class="wrap">
+    <div class="studio-grid">
+      <div class="studio-copy reveal">
+        <div class="sec-label">01 — THE STUDIO</div>
+        <h2>Where technology meets <span class="grad-text">creative thinking.</span></h2>
+        <p class="lead" style="max-width:560px">NEXORA is a digital development studio focused on creating modern, functional and visually distinctive digital products. From high-converting websites to complex web applications and AI-powered experiences, every project is built with technology, design and performance in mind.</p>
+      </div>
+      <div class="principles">
+        <div class="principle reveal d1"><div class="num">PRINCIPLE / 01</div><h3>Design</h3><p>Clean interfaces and thoughtful user experiences.</p></div>
+        <div class="principle reveal d2"><div class="num">PRINCIPLE / 02</div><h3>Technology</h3><p>Modern, scalable and reliable development.</p></div>
+        <div class="principle reveal d3"><div class="num">PRINCIPLE / 03</div><h3>Innovation</h3><p>AI, automation and emerging technologies used where they create real value.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CAPABILITIES -->
+<section id="capabilities">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="sec-label">02 — CAPABILITIES</div>
+      <h2>Built for the <span class="grad-text">modern web.</span></h2>
+    </div>
+    <div class="cap-grid">
+      <div class="cap-card reveal d1"><div class="glow"></div>
+        <div class="cap-icon"><svg fill="none" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-3 13.5"/></svg></div>
+        <h3>Web Development</h3><p>Modern responsive websites and powerful web applications.</p><div class="cap-num">/01</div></div>
+      <div class="cap-card reveal d2"><div class="glow"></div>
+        <div class="cap-icon"><svg fill="none" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25zm.75-12h9v9h-9v-9z"/></svg></div>
+        <h3>AI &amp; Automation</h3><p>Intelligent features, AI integrations and workflow automation.</p><div class="cap-num">/02</div></div>
+      <div class="cap-card reveal d3"><div class="glow"></div>
+        <div class="cap-icon"><svg fill="none" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42"/></svg></div>
+        <h3>UI/UX Design</h3><p>Clean, intuitive and conversion-focused digital interfaces.</p><div class="cap-num">/03</div></div>
+      <div class="cap-card reveal d1"><div class="glow"></div>
+        <div class="cap-icon"><svg fill="none" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007z"/></svg></div>
+        <h3>E-Commerce</h3><p>Modern online stores optimized for usability and performance.</p><div class="cap-num">/04</div></div>
+      <div class="cap-card reveal d2"><div class="glow"></div>
+        <div class="cap-icon"><svg fill="none" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/></svg></div>
+        <h3>Creative Development</h3><p>Interactive experiences using animation, motion and 3D technology.</p><div class="cap-num">/05</div></div>
+      <div class="cap-card reveal d3"><div class="glow"></div>
+        <div class="cap-icon"><svg fill="none" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg></div>
+        <h3>Digital Strategy</h3><p>Technical and creative direction for digital products.</p><div class="cap-num">/06</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- TECH -->
+<section id="tech">
+  <div class="tech-lines"></div>
+  <div class="wrap" style="position:relative">
+    <div class="reveal" style="text-align:center">
+      <div class="sec-label" style="justify-content:center">TECHNOLOGY</div>
+      <h2>Technology behind <span class="grad-text">the experience.</span></h2>
+    </div>
+    <div class="tech-groups">
+      <div class="tech-group reveal d1"><h3><i></i>FRONTEND</h3>
+        <div class="badges"><span class="badge">React</span><span class="badge">Next.js</span><span class="badge">TypeScript</span><span class="badge">JavaScript</span><span class="badge">Tailwind CSS</span></div></div>
+      <div class="tech-group reveal d2"><h3><i></i>BACKEND</h3>
+        <div class="badges"><span class="badge">Node.js</span><span class="badge">Python</span><span class="badge">Firebase</span><span class="badge">MongoDB</span><span class="badge">REST APIs</span></div></div>
+      <div class="tech-group reveal d3"><h3><i></i>CREATIVE</h3>
+        <div class="badges"><span class="badge">Figma</span><span class="badge">Framer Motion</span><span class="badge">Three.js</span><span class="badge">WebGL</span></div></div>
+      <div class="tech-group reveal d4"><h3><i></i>AI</h3>
+        <div class="badges"><span class="badge">AI APIs</span><span class="badge">AI Integration</span><span class="badge">Automation</span><span class="badge">Intelligent Agents</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- WORK -->
+<section id="work">
+  <div class="wrap">
+    <div class="work-head reveal">
+      <div>
+        <div class="sec-label">03 — SELECTED WORK</div>
+        <h2>Selected digital <span class="grad-text">experiences.</span></h2>
+      </div>
+      <a href="#contact" class="btn btn-ghost magnetic" style="padding:13px 26px;font-size:13px">Start yours <span class="arr">→</span></a>
+    </div>
+    <div class="work-layout">
+
+      <article class="project pr-a reveal d1">
+        <div class="proj-tag">AI / SAAS</div>
+        <div class="p-visual"><div class="scene" style="background:radial-gradient(circle at 30% 20%,#3b1d6e,transparent 60%),radial-gradient(circle at 75% 80%,#0e3a5f,transparent 55%),#08081a">
+          <div class="holo" style="width:190px;height:190px;background:radial-gradient(circle,rgba(168,85,247,.55),transparent 70%);top:18%;left:14%"></div>
+          <div class="ring" style="width:260px;height:260px;top:8%;left:4%;animation:float1 12s ease-in-out infinite"></div>
+          <div class="ring" style="width:150px;height:150px;bottom:10%;right:12%;animation:float2 10s ease-in-out infinite"></div>
+          <div class="holo" style="width:120px;height:120px;background:radial-gradient(circle,rgba(34,211,238,.5),transparent 70%);bottom:14%;right:18%"></div>
+        </div></div>
+        <div class="p-body">
+          <div class="p-cat">AI / SAAS PLATFORM</div>
+          <h3>NEXORA AI</h3>
+          <p>An intelligent productivity platform combining automation, modern dashboards and AI-powered workflows.</p>
+          <div class="p-tech">Next.js • TypeScript • AI • Node.js</div>
+          <div class="p-actions"><a href="#" class="p-link">View Project <span class="arr">→</span></a><a href="#" class="p-link">Case Study <span class="arr">→</span></a></div>
+        </div>
+      </article>
+
+      <article class="project pr-b reveal d2">
+        <div class="proj-tag">E-COMMERCE</div>
+        <div class="p-visual"><div class="scene" style="background:radial-gradient(circle at 70% 25%,#14532d,transparent 55%),radial-gradient(circle at 25% 75%,#1e3a8a,transparent 60%),#08081a">
+          <div class="holo" style="width:160px;height:160px;background:radial-gradient(circle,rgba(52,211,153,.45),transparent 70%);top:20%;right:16%"></div>
+          <div class="ring" style="width:200px;height:200px;bottom:12%;left:10%;animation:float2 13s ease-in-out infinite"></div>
+        </div></div>
+        <div class="p-body">
+          <div class="p-cat">E-COMMERCE</div>
+          <h3>LANKAMART</h3>
+          <p>A modern commerce experience designed around fast navigation, clean product discovery and seamless purchasing.</p>
+          <div class="p-tech">Next.js • TypeScript • Firebase • Tailwind CSS</div>
+          <div class="p-actions"><a href="#" class="p-link">View Project <span class="arr">→</span></a><a href="#" class="p-link">Live Demo <span class="arr">→</span></a></div>
+        </div>
+      </article>
+
+      <article class="project pr-c reveal d1">
+        <div class="proj-tag">SAAS</div>
+        <div class="p-visual"><div class="scene" style="background:radial-gradient(circle at 30% 70%,#5b21b6,transparent 55%),radial-gradient(circle at 80% 20%,#0c4a6e,transparent 55%),#08081a">
+          <div class="holo" style="width:150px;height:150px;background:radial-gradient(circle,rgba(59,130,246,.5),transparent 70%);top:26%;left:16%"></div>
+          <div class="ring" style="width:180px;height:180px;top:10%;right:8%;animation:float1 11s ease-in-out infinite"></div>
+        </div></div>
+        <div class="p-body">
+          <div class="p-cat">SAAS / PRODUCTIVITY</div>
+          <h3>DEVFLOW</h3>
+          <p>A powerful workspace for managing projects, tasks and development workflows from a single interface.</p>
+          <div class="p-tech">React • Node.js • MongoDB • REST API</div>
+          <div class="p-actions"><a href="#" class="p-link">View Project <span class="arr">→</span></a><a href="#" class="p-link">Case Study <span class="arr">→</span></a></div>
+        </div>
+      </article>
+
+      <article class="project pr-d reveal d2">
+        <div class="proj-tag">CREATIVE EXPERIENCE</div>
+        <div class="p-visual"><div class="scene" style="background:radial-gradient(circle at 60% 30%,#86198f,transparent 55%),radial-gradient(circle at 20% 80%,#164e63,transparent 60%),#08081a">
+          <div class="holo" style="width:200px;height:200px;background:radial-gradient(circle,rgba(217,70,239,.4),transparent 70%);top:12%;left:30%"></div>
+          <div class="ring" style="width:230px;height:230px;top:6%;left:22%;animation:float2 14s ease-in-out infinite"></div>
+          <div class="ring" style="width:120px;height:120px;bottom:12%;right:14%;animation:float1 9s ease-in-out infinite"></div>
+        </div></div>
+        <div class="p-body">
+          <div class="p-cat">CREATIVE DIGITAL EXPERIENCE</div>
+          <h3>AURA</h3>
+          <p>An immersive digital experience combining experimental motion, elegant typography and interactive visuals.</p>
+          <div class="p-tech">Next.js • Framer Motion • Three.js</div>
+          <div class="p-actions"><a href="#" class="p-link">Explore <span class="arr">→</span></a><a href="#" class="p-link">Case Study <span class="arr">→</span></a></div>
+        </div>
+      </article>
+
+      <article class="project pr-e reveal d1">
+        <div class="proj-tag">TRAVEL PLATFORM</div>
+        <div class="p-visual"><div class="scene" style="background:radial-gradient(circle at 25% 30%,#7c2d12,transparent 50%),radial-gradient(circle at 75% 60%,#134e4a,transparent 55%),#08081a">
+          <div class="holo" style="width:240px;height:240px;background:radial-gradient(circle,rgba(251,146,60,.35),transparent 70%);top:0%;left:8%"></div>
+          <div class="holo" style="width:190px;height:190px;background:radial-gradient(circle,rgba(45,212,191,.4),transparent 70%);bottom:0%;right:10%"></div>
+          <div class="ring" style="width:280px;height:280px;top:-14%;left:3%;animation:float1 15s ease-in-out infinite"></div>
+        </div></div>
+        <div class="p-body">
+          <div class="p-cat">TRAVEL / DIGITAL PLATFORM</div>
+          <h3>TRAVEL LK</h3>
+          <p>A visually rich travel platform designed to showcase Sri Lankan destinations and experiences.</p>
+          <div class="p-tech">React • Next.js • API Integration</div>
+          <div class="p-actions"><a href="#" class="p-link">View Project <span class="arr">→</span></a><a href="#" class="p-link">Live Demo <span class="arr">→</span></a></div>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section id="process">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="sec-label">04 — PROCESS</div>
+      <h2>From idea to <span class="grad-text">digital experience.</span></h2>
+    </div>
+    <div class="timeline">
+      <div class="step reveal d1"><div class="dot">01</div><h3>Discover</h3><p>Understand the problem, audience and project goals.</p></div>
+      <div class="step reveal d2"><div class="dot">02</div><h3>Define</h3><p>Create the strategy, structure and technical direction.</p></div>
+      <div class="step reveal d3"><div class="dot">03</div><h3>Design</h3><p>Develop the visual system, UX and interaction design.</p></div>
+      <div class="step reveal d4"><div class="dot">04</div><h3>Build</h3><p>Turn the concept into a fast, responsive digital product.</p></div>
+      <div class="step reveal d5"><div class="dot">05</div><h3>Refine</h3><p>Test, optimize and polish every important detail.</p></div>
+      <div class="step reveal d5"><div class="dot">06</div><h3>Launch</h3><p>Deliver a production-ready experience built for growth.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY -->
+<section id="why">
+  <div class="wrap">
+    <div class="reveal" style="text-align:center">
+      <div class="sec-label" style="justify-content:center">WHY NEXORA</div>
+      <h2>Why build with <span class="grad-text">NEXORA?</span></h2>
+    </div>
+    <div class="why-grid">
+      <div class="why-card reveal d1"><div class="check"><svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></div><h3>Performance First</h3><p>Fast-loading experiences optimized for modern devices.</p></div>
+      <div class="why-card reveal d2"><div class="check"><svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></div><h3>Modern Technology</h3><p>Built using current, scalable technologies.</p></div>
+      <div class="why-card reveal d3"><div class="check"><svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></div><h3>Design Driven</h3><p>Technology and design work together from the beginning.</p></div>
+      <div class="why-card reveal d1"><div class="check"><svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></div><h3>AI Ready</h3><p>Intelligent features and automation integrated where useful.</p></div>
+      <div class="why-card reveal d2"><div class="check"><svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></div><h3>Responsive Everywhere</h3><p>Designed to work beautifully across every screen size.</p></div>
+      <div class="why-card reveal d3"><div class="check"><svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></div><h3>Built to Scale</h3><p>Architecture prepared for future growth.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- METRICS -->
+<section id="metrics">
+  <div class="wrap">
+    <div class="metric-grid">
+      <div class="metric reveal d1"><h3>Modern Stack</h3><p>React • Next.js • Node.js</p></div>
+      <div class="metric reveal d2"><h3>Multi-Platform</h3><p>Web • Mobile • Cloud</p></div>
+      <div class="metric reveal d3"><h3>Design Approach</h3><p>UX • Motion • 3D</p></div>
+      <div class="metric reveal d4"><h3>Future Ready</h3><p>AI • Automation • APIs</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="contact-orb"></div>
+  <div class="wrap">
+    <div class="contact-head reveal">
+      <div class="sec-label">05 — START A PROJECT</div>
+      <h2 class="contact-h">Have an ambitious idea?<span class="l2">Let's build it.</span></h2>
+      <p class="lead" style="margin:20px auto 0">Tell us what you're working on and let's explore how technology can turn the idea into a powerful digital experience.</p>
+    </div>
+    <form class="contact-form reveal d2" id="contactForm" novalidate>
+      <div class="form-row">
+        <div class="field"><label for="f-name">NAME</label><input id="f-name" type="text" name="name" placeholder="Your name" required autocomplete="name"></div>
+        <div class="field"><label for="f-company">COMPANY / ORGANIZATION</label><input id="f-company" type="text" name="company" placeholder="Company or team" autocomplete="organization"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label for="f-email">EMAIL</label><input id="f-email" type="email" name="email" placeholder="you@example.com" required autocomplete="email"></div>
+        <div class="field"><label for="f-type">PROJECT TYPE</label>
+          <select id="f-type" name="type" required>
+            <option value="" disabled selected>Select a project type</option>
+            <option>Website</option><option>Web Application</option><option>E-Commerce</option>
+            <option>AI Integration</option><option>UI/UX Design</option><option>Other</option>
+          </select></div>
+      </div>
+      <div class="field"><label for="f-msg">MESSAGE</label><textarea id="f-msg" name="message" placeholder="Tell us about your project, goals and timeline..." required></textarea></div>
+      <button type="submit" class="btn btn-primary form-submit magnetic">Start a Conversation <span class="arr">→</span></button>
+      <div id="formMsg" role="status">Thank you — your message has been received. We'll be in touch soon.</div>
+    </form>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-logo">NEX<b>O</b>RA</div>
+        <p class="foot-tag">Digital experiences, engineered for the future.</p>
+      </div>
+      <div class="foot-col">
+        <h4>NAVIGATE</h4>
+        <a href="#work">Work</a>
+        <a href="#capabilities">Capabilities</a>
+        <a href="#process">Process</a>
+        <a href="#studio">About</a>
+        <a href="#contact">Contact</a>
+      </div>
+      <div class="foot-col">
+        <h4>CONNECT</h4>
+        <a href="#" rel="noopener">GitHub</a>
+        <a href="#" rel="noopener">LinkedIn</a>
+        <a href="#" rel="noopener">Instagram</a>
+        <a href="#" rel="noopener">X</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <p>© 2026 NEXORA. All rights reserved.</p>
+      <div class="socials">
+        <a href="#" aria-label="GitHub"><svg viewBox="0 0 24 24"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55v-2.15c-3.2.7-3.87-1.54-3.87-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.75 2.69 1.25 3.34.95.11-.74.4-1.25.72-1.53-2.55-.29-5.23-1.28-5.23-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.17 1.18a11 11 0 015.77 0c2.2-1.49 3.17-1.18 3.17-1.18.62 1.58.23 2.75.11 3.04.74.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.36.77 1.05.77 2.13v3.16c0 .31.21.67.8.55A11.5 11.5 0 0023.5 12C23.5 5.65 18.35.5 12 .5z"/></svg></a>
+        <a href="#" aria-label="LinkedIn"><svg viewBox="0 0 24 24"><path d="M4.98 3.5C4.98 4.88 3.87 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1s2.48 1.12 2.48 2.5zM.22 8.09h4.56V23H.22V8.09zM8.34 8.09h4.37v2.03h.06c.61-1.15 2.1-2.37 4.32-2.37 4.62 0 5.47 3.04 5.47 6.99V23h-4.55v-6.7c0-1.6-.03-3.66-2.23-3.66-2.24 0-2.58 1.74-2.58 3.55V23H8.34V8.09z"/></svg></a>
+        <a href="#" aria-label="Instagram"><svg viewBox="0 0 24 24"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 3.25.15 4.77 1.69 4.92 4.92.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.15 3.23-1.66 4.77-4.92 4.92-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-3.26-.15-4.77-1.7-4.92-4.92C2.17 15.58 2.16 15.2 2.16 12s.01-3.58.07-4.85C2.38 3.92 3.9 2.38 7.15 2.23 8.42 2.17 8.8 2.16 12 2.16zM12 0C8.74 0 8.33.01 7.05.07 2.7.27.27 2.69.07 7.05.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.2 4.36 2.62 6.78 6.98 6.98C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c4.35-.2 6.78-2.62 6.98-6.98.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95C23.73 2.7 21.31.27 16.95.07 15.67.01 15.26 0 12 0zm0 5.84A6.16 6.16 0 105.84 12 6.16 6.16 0 0012 5.84zm0 10.15A4 4 0 1116 12a4 4 0 01-4 3.99zm6.4-11.85a1.44 1.44 0 101.44 1.44 1.44 1.44 0 00-1.44-1.44z"/></svg></a>
+        <a href="#" aria-label="X"><svg viewBox="0 0 24 24"><path d="M18.9 1.15h3.68l-8.04 9.19L24 22.85h-7.41l-5.8-7.58-6.64 7.58H.47l8.6-9.83L0 1.15h7.59l5.24 6.93 6.07-6.93zm-1.29 19.5h2.04L6.49 3.24H4.3l13.31 17.41z"/></svg></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+"use strict";
+const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- preloader ---------- */
+window.addEventListener("load", () => {
+  setTimeout(() => document.getElementById("loader").classList.add("done"), reduced ? 50 : 1400);
+});
+setTimeout(() => document.getElementById("loader").classList.add("done"), 3200); // failsafe
+
+/* ---------- nav scroll state ---------- */
+const nav = document.getElementById("nav");
+const onScroll = () => nav.classList.toggle("scrolled", window.scrollY > 40);
+window.addEventListener("scroll", onScroll, {passive:true}); onScroll();
+
+/* ---------- mobile menu ---------- */
+const burger = document.getElementById("burger"), mm = document.getElementById("mobileMenu");
+burger.addEventListener("click", () => {
+  const open = mm.classList.toggle("open");
+  burger.classList.toggle("open", open);
+  burger.setAttribute("aria-expanded", open);
+  document.body.style.overflow = open ? "hidden" : "";
+});
+mm.querySelectorAll("a").forEach(a => a.addEventListener("click", () => {
+  mm.classList.remove("open"); burger.classList.remove("open");
+  burger.setAttribute("aria-expanded","false"); document.body.style.overflow = "";
+}));
+
+/* ---------- reveal on scroll ---------- */
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+}, {threshold:.12, rootMargin:"0px 0px -40px 0px"});
+document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+
+/* ---------- cursor spotlight ---------- */
+const spot = document.getElementById("spotlight");
+let sx = innerWidth/2, sy = innerHeight/2, tx = sx, ty = sy;
+window.addEventListener("mousemove", e => { tx = e.clientX; ty = e.clientY; }, {passive:true});
+(function moveSpot(){
+  sx += (tx - sx) * .08; sy += (ty - sy) * .08;
+  spot.style.transform = `translate(${sx - 320}px, ${sy - 320}px)`;
+  requestAnimationFrame(moveSpot);
+})();
+
+/* ---------- magnetic buttons ---------- */
+if (!reduced && matchMedia("(pointer:fine)").matches) {
+  document.querySelectorAll(".magnetic").forEach(btn => {
+    btn.addEventListener("mousemove", e => {
+      const r = btn.getBoundingClientRect();
+      const x = e.clientX - r.left - r.width/2, y = e.clientY - r.top - r.height/2;
+      btn.style.transform = `translate(${x*.18}px, ${y*.28}px)`;
+    });
+    btn.addEventListener("mouseleave", () => { btn.style.transform = ""; });
+  });
+}
+
+/* ---------- contact form ---------- */
+document.getElementById("contactForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const f = e.target;
+  if (!f.checkValidity()) { f.reportValidity(); return; }
+  f.reset();
+  document.getElementById("formMsg").classList.add("show");
+  setTimeout(() => document.getElementById("formMsg").classList.remove("show"), 5000);
+});
+
+/* ---------- THREE.JS hero scene ---------- */
+if (window.THREE && !reduced) {
+  const canvas = document.getElementById("hero-canvas");
+  const renderer = new THREE.WebGLRenderer({canvas, alpha:true, antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(50, 1, .1, 100);
+  camera.position.z = 7;
+
+  const group = new THREE.Group();
+  scene.add(group);
+
+  // outer glowing wireframe icosahedron
+  const geo = new THREE.IcosahedronGeometry(2.15, 1);
+  const wire = new THREE.LineSegments(
+    new THREE.WireframeGeometry(geo),
+    new THREE.LineBasicMaterial({color:0x8b5cf6, transparent:true, opacity:.32})
+  );
+  group.add(wire);
+
+  // inner solid icosahedron with fresnel-ish glow
+  const inner = new THREE.Mesh(
+    new THREE.IcosahedronGeometry(1.35, 1),
+    new THREE.MeshBasicMaterial({color:0x22d3ee, wireframe:true, transparent:true, opacity:.16})
+  );
+  group.add(inner);
+
+  // particle field
+  const N = 320, pos = new Float32Array(N * 3);
+  for (let i = 0; i < N * 3; i++) pos[i] = (Math.random() - .5) * 16;
+  const pGeo = new THREE.BufferGeometry();
+  pGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  const particles = new THREE.Points(pGeo, new THREE.PointsMaterial({color:0xa78bfa, size:.035, transparent:true, opacity:.65}));
+  scene.add(particles);
+
+  // orbiting rings
+  const ringMat = new THREE.LineBasicMaterial({color:0x3b82f6, transparent:true, opacity:.22});
+  const ring1 = new THREE.LineLoop(new THREE.RingGeometry(3.1, 3.12, 90), ringMat);
+  ring1.rotation.x = Math.PI / 2.4;
+  const ring2 = new THREE.LineLoop(new THREE.RingGeometry(3.7, 3.72, 90), new THREE.LineBasicMaterial({color:0x22d3ee, transparent:true, opacity:.14}));
+  ring2.rotation.x = Math.PI / 1.7; ring2.rotation.y = .5;
+  group.add(ring1, ring2);
+
+  // mouse parallax
+  let mx = 0, my = 0, cx = 0, cy = 0;
+  window.addEventListener("mousemove", e => {
+    mx = (e.clientX / innerWidth - .5) * 2;
+    my = (e.clientY / innerHeight - .5) * 2;
+  }, {passive:true});
+
+  function size() {
+    const hero = document.getElementById("hero");
+    const w = hero.clientWidth, h = hero.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+    group.position.x = w > 900 ? 2.6 : 0;
+    group.position.y = w > 900 ? 0 : 1.2;
+    const s = w > 900 ? 1 : .7;
+    group.scale.setScalar(s);
+  }
+  size(); window.addEventListener("resize", size);
+
+  const clock = new THREE.Clock();
+  let heroVisible = true;
+  new IntersectionObserver(e => heroVisible = e[0].isIntersecting).observe(document.getElementById("hero"));
+
+  (function animate(){
+    requestAnimationFrame(animate);
+    if (!heroVisible) return;
+    const t = clock.getElapsedTime();
+    cx += (mx - cx) * .04; cy += (my - cy) * .04;
+    group.rotation.y = t * .12 + cx * .5;
+    group.rotation.x = cy * .35 + Math.sin(t * .2) * .08;
+    inner.rotation.y = -t * .3;
+    ring1.rotation.z = t * .18; ring2.rotation.z = -t * .12;
+    particles.rotation.y = t * .02;
+    renderer.render(scene, camera);
+  })();
+}
+})();
+</script>
+</body>
+</html>
